@@ -119,9 +119,15 @@ final class Tenancy
 
     public static function registerRoutes(): void
     {
-        Route::middleware('web')
-            ->prefix('{tenant}')
-            ->group(base_path('routes/tenant.php'));
+        $path = Route::middleware('web')->prefix('{tenant}');
+
+        // Path and subdomain copies share URIs like /dashboard. Route caching
+        // requires unique names, so keep tenant.* on the live host style.
+        if (self::subdomainsEnabled()) {
+            $path->name('path.');
+        }
+
+        $path->group(base_path('routes/tenant.php'));
 
         if (self::subdomainsEnabled()) {
             Route::middleware('web')
