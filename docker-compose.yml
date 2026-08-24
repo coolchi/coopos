@@ -1,0 +1,62 @@
+# CoopOS - isolated stack. Only HTTP bound to 127.0.0.1:${APP_PORT:-8088}.
+x-app: &app
+  image: coopos-app:${IMAGE_TAG:-latest}
+  build: .
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    DB_HOST: ${DB_HOST:-host.docker.internal}
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - coopos-storage:/var/www/html/storage
+  networks: [coopos]
+
+services:
+  app:
+    <<: *app
+    container_name: coopos-app
+    ports:
+      - "127.0.0.1:${APP_PORT:-8088}:8080"
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 768M }
+
+  queue:
+    <<: *app
+    container_name: coopos-queue
+    environment: { CONTAINER_ROLE: queue, DB_HOST: "${DB_HOST:-host.docker.internal}" }
+    command: ["su","-s","/bin/sh","www-data","-c","php artisan queue:work --sleep=3 --tries=3 --max-time=3600"]
+    healthcheck: { disable: true }
+    depends_on: { app: { condition: service_healthy } }
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 384M }
+
+  scheduler:
+    <<: *app
+    container_name: coopos-scheduler
+    environment: { CONTAINER_ROLE: scheduler, DB_HOST: "${DB_HOST:-host.docker.internal}" }
+    command: ["su","-s","/bin/sh","www-data","-c","php artisan schedule:work"]
+    healthcheck: { disable: true }
+    depends_on: { app: { condition: service_healthy } }
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 256M }
+
+  # Optional dedicated DB instead of host MySQL (set DB_HOST=db):
+  # db:
+  #   image: mysql:8.0
+  #   container_name: coopos-db
+  #   restart: unless-stopped
+  #   environment: { MYSQL_DATABASE: coopos, MYSQL_USER: "${DB_USERNAME}", MYSQL_PASSWORD: "${DB_PASSWORD}", MYSQL_RANDOM_ROOT_PASSWORD: "yes" }
+  #   volumes: [coopos-mysql:/var/lib/mysql]
+  #   networks: [coopos]
+
+volumes:
+  coopos-storage:
+  # coopos-mysql:
+
+networks:
+  coopos:
+    name: coopos-net
