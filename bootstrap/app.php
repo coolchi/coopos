@@ -41,7 +41,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustHosts(at: function () {
             $domain = Tenancy::centralDomain();
 
-            return array_filter([$domain, 'www.'.$domain, '*.'.$domain, 'localhost', '127.0.0.1']);
+            // Patterns are regexes (Symfony wraps them in {...}i); '*.domain' is invalid regex.
+            return array_filter([
+                $domain ? '^(.+\\.)?'.preg_quote($domain).'$' : null,
+                '^localhost$',
+                '^127\\.0\\.0\\.1$',
+            ]);
         });
 
         // Behind Cloudflare + nginx proxy to Docker (host network on :8088)

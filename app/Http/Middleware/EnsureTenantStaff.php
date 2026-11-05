@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\UserType;
 use App\Support\BranchContext;
+use App\Support\WrongTenantRedirect;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,7 +20,10 @@ class EnsureTenantStaff
             return $next($request);
         }
 
-        abort_unless($user->tenant_id === tenant()?->id, 403);
+        if ($user->tenant_id !== tenant()?->id) {
+            return WrongTenantRedirect::for($request, $user);
+        }
+
         abort_if($user->type === UserType::Member, 403, 'Members should use the member portal.');
 
         if ($user->isBranchScoped() && $user->branch) {
