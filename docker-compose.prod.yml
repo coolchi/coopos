@@ -1,5 +1,4 @@
-# Production on MP-Main: host network (iptables:false), bind Apache on 8088.
-# Only coopos-* containers. DB via 127.0.0.1 (existing coopos MySQL user).
+# Production on MP-Main: host network (iptables:false), Apache on 8088.
 services:
   app:
     network_mode: host
@@ -13,6 +12,12 @@ services:
       CONTAINER_ROLE: app
     volumes:
       - /home/forge/coopos.ng/storage:/var/www/html/storage
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-H", "Host: coopos.ng", "http://127.0.0.1:8088/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
   queue:
     network_mode: host
     ports: !reset []

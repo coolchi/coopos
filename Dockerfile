@@ -33,6 +33,6 @@ RUN rm -f public/hot .env && mkdir -p storage/framework/{cache,sessions,views} s
 COPY docker/entrypoint.sh /usr/local/bin/coopos-entrypoint
 RUN chmod +x /usr/local/bin/coopos-entrypoint
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 CMD curl -fsS -H 'Host: localhost' http://127.0.0.1:${APP_PORT_INTERNAL}/up || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 CMD curl -fsS -H 'Host: coopos.ng' http://127.0.0.1:${APP_PORT_INTERNAL}/up || exit 1
 ENTRYPOINT ["coopos-entrypoint"]
 CMD ["apache2-foreground"]
