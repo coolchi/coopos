@@ -44,6 +44,16 @@ return Application::configure(basePath: dirname(__DIR__))
             return array_filter([$domain, 'www.'.$domain, '*.'.$domain, 'localhost', '127.0.0.1']);
         });
 
+        // Behind Cloudflare + nginx proxy to Docker (host network on :8088)
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_AWS_ELB,
+        );
+
         $middleware->prependToPriorityList(
             AuthenticatesRequests::class,
             IdentifyTenantFromHost::class,
