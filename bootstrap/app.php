@@ -41,8 +41,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustHosts(at: function () {
             $domain = Tenancy::centralDomain();
 
-            return array_filter([$domain, 'www.'.$domain, '*.'.$domain, 'localhost', '127.0.0.1']);
+            // Patterns are regexes (Symfony wraps them in {...}i); '*.domain' is invalid regex.
+            return array_filter([
+                $domain ? '^(.+\\.)?'.preg_quote($domain).'$' : null,
+                '^localhost$',
+                '^127\\.0\\.0\\.1$',
+            ]);
         });
+
+        // Behind Cloudflare + nginx proxy to Docker (host network on :8088)
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_AWS_ELB,
+        );
 
         $middleware->prependToPriorityList(
             AuthenticatesRequests::class,

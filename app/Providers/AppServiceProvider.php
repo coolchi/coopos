@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\URL;
+
 use App\Domain\Payments\PaymentGatewayManager;
 use App\Jobs\ProcessContributionReminders;
 use App\Models\PlatformSetting;
@@ -20,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
         Password::defaults(fn () => Password::min(8)->mixedCase()->numbers());
 
         RateLimiter::for('login', function (Request $request) {

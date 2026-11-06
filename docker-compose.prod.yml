@@ -1,0 +1,40 @@
+# Production on MP-Main: host network (iptables:false), Apache on 8088.
+services:
+  app:
+    network_mode: host
+    ports: !reset []
+    extra_hosts: !reset []
+    networks: !reset []
+    environment:
+      DB_HOST: "127.0.0.1"
+      APP_PORT_INTERNAL: "8088"
+      TRUSTED_PROXIES: "*"
+      CONTAINER_ROLE: app
+    volumes:
+      - /home/forge/coopos.ng/storage:/var/www/html/storage
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-H", "Host: coopos.ng", "http://127.0.0.1:8088/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+  queue:
+    network_mode: host
+    ports: !reset []
+    extra_hosts: !reset []
+    networks: !reset []
+    environment:
+      DB_HOST: "127.0.0.1"
+      CONTAINER_ROLE: queue
+    volumes:
+      - /home/forge/coopos.ng/storage:/var/www/html/storage
+  scheduler:
+    network_mode: host
+    ports: !reset []
+    extra_hosts: !reset []
+    networks: !reset []
+    environment:
+      DB_HOST: "127.0.0.1"
+      CONTAINER_ROLE: scheduler
+    volumes:
+      - /home/forge/coopos.ng/storage:/var/www/html/storage
